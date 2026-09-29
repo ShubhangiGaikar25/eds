@@ -2,7 +2,7 @@
  * Accordion Block
  * https://www.aem.live/developer/block-collection/accordion
  */
-export default function decorate(el) {
+export default function init(el) {
     [...el.children].forEach((row) => {
         // label → <summary>
         const label = row.children[0];
