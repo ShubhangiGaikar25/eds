@@ -63,11 +63,15 @@
   --color-link: var(--udexColorBlueSapBlue500, #0070f2);
 
   /* Typography */
-  --font-family-base: var(--udexTypographyFontFamily, 'SAP72', sans-serif);
+  /* --font-family-base: var(--udexTypographyFontFamily, 'SAP72', sans-serif); */
+  --font-family-base: var(--sapFontFamily, '72 Brand Variable', sans-serif);
   --font-size-base: var(--udexTypographyBodyMFontSize, 1rem);
-  --font-size-h1: var(--udexTypographyHeadingXXLFontSize, 3rem);
+  /* --font-size-h1: var(--udexTypographyHeadingXXLFontSize, 3rem);
   --font-size-h2: var(--udexTypographyHeadingXLFontSize, 2.25rem);
-  --font-size-h3: var(--udexTypographyHeadingLFontSize, 1.75rem);
+  --font-size-h3: var(--udexTypographyHeadingLFontSize, 1.75rem); */
+  -font-size-h1: var(--sapFontHeader1Size, 3rem);
+  --font-size-h2: var(--sapFontHeader2Size, 2.25rem);
+  --font-size-h3: var(--sapFontHeader3Size, 1.75rem);
 
     /* Spacing */
   --spacing-xs: var(--udexSpacer2, 0.5rem);
@@ -199,7 +203,8 @@
 
   /* fonts */
   /* --font-family: montserrat, "Trebuchet MS", sans-serif; */
-  --font-family: var(--udexTypographyFontFamily, 'SAP72', montserrat, sans-serif);
+  /* --font-family: var(--udexTypographyFontFamily, 'SAP72', montserrat, sans-serif); */
+  --font-family: var(--sapFontFamily, '72 Brand Variable', montserrat, sans-serif);
 
   /* headings */
   --heading-font-size-xxl: 32.44px;
