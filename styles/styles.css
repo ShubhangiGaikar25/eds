@@ -198,7 +198,8 @@
   --color-shaded: light-dark(#f9f9f9, #111);
 
   /* fonts */
-  --font-family: montserrat, "Trebuchet MS", sans-serif;
+  /* --font-family: montserrat, "Trebuchet MS", sans-serif; */
+  --font-family: var(--udexTypographyFontFamily, 'SAP72', montserrat, sans-serif);
 
   /* headings */
   --heading-font-size-xxl: 32.44px;
