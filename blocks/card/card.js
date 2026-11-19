@@ -1,4 +1,4 @@
-export default function init(el) {
+export default function decorate(el) {
   const inner = el.querySelector(':scope > div');
   inner.classList.add('card-inner');
   const pic = el.querySelector('picture');
