@@ -169,7 +169,7 @@
   --shadow-xl: var(--sapContent_Shadow3, 0px 20px 80px 0px rgba(34, 53, 72, 0.25));
 
   /* ===== UDEX Design Token Mappings ends here ===== */
-  
+
   /* grid */
   --grid-container-width: 83.4%;
   --grid-column-width: calc(var(--grid-container-width) / 12);
@@ -274,8 +274,10 @@
   --color-dark-base: 0 0 0;
   --color-light: rgb(255 255 255);
   --color-dark: rgb(0 0 0);
-  --color-text: light-dark(var(--color-dark), var(--color-light));
-  --color-link: light-dark(var(--color-gray-900), var(--color-gray-100));
+  /* --color-text: light-dark(var(--color-dark), var(--color-light));
+  --color-link: light-dark(var(--color-gray-900), var(--color-gray-100)); */
+  --color-text: var(--sapTextColor, #223548);
+  --color-link: var(--sapLinkColor, #0057D2);
   --color-brand: var(--color-purple-500);
   --color-accent: light-dark(var(--color-magenta-600), var(--color-magenta-500));
   --color-background: light-dark(var(--color-light), var(--color-dark));
