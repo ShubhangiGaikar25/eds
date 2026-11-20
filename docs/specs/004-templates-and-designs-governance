@@ -1,0 +1,321 @@
+# 004 - Templates and Designs Governance POC 
+
+## Overview 
+
+This document captures the analysis, implementation details, learnings and next steps for the **Templates and Designs Governance POC** — integrating SAP UDEX (Unified Design Experience) design tokens into an Edge Delivery Services (EDS) site with automated design sync capabilities. 
+
+--- 
+
+## Objective 
+
+Build an EDS-based site that: 
+- Reads the latest designs from the UDEX shared library 
+- Automatically stays in sync with UDEX design updates 
+- Periodically detects and applies token changes without manual intervention 
+- Validates design alignment through governance checks 
+- Enforces design governance so event owners can only change content and images — not colours, fonts or layout rules 
+
+--- 
+
+## Scope 
+
+| Item | Status | 
+|------|--------| 
+| UDEX CDN Integration | ✅ Done | 
+| Basic Token Mapping in styles.css | ✅ Done | 
+| UDEX-Aligned Template Page | ✅ Done | 
+| EDS Block Fixes (accordion, card) | ✅ Done | 
+| CSP Configuration | ✅ Done | 
+| DA Access Configuration | ✅ Done | 
+| Governance Check (basic) | ✅ Done | 
+| Complete UDEX Token Mapping (all categories) | ✅ Done | 
+| Header/Footer Guard in scripts.js | ✅ Done | 
+| Folder Permissions for Shared Parts | 🔜 Phase 1 Pending | 
+| Event Template Set Structure | 🔜 Phase 1 Pending| 
+| Semi-Automated Token Monitoring | 🔜 Phase 2 | 
+| Fully Automated Design Sync | 🔜 Phase 3 | 
+
+--- 
+
+## Requirement Summary (from client, 2026-11-12) 
+
+- All standard templates follow the SAP brand — one theme, many events 
+- Templates use UDEX as the design reference 
+- Owners pick a template and change content and images only — NOT colours, fonts or layout rules 
+- Header and footer are locked; more locked areas to follow from business rules 
+- Block-library owner is a designer (to be named) with a process like sap.com's 
+- Designs and template governance still to be agreed with the business 
+- One gap identified: a page can switch off or replace the header/footer through page metadata (`header: off`) — locking the fragment isn't enough; event pages need a code guard 
+
+--- 
+
+## Phase 1 — Manual Sync (COMPLETED ✅) 
+
+### 1.1 UDEX CDN Integration 
+
+Added the following CDN links to `head.html`: 
+
+<!-- UDEX Design Tokens - SAP Glow Theme -->
+<link rel="stylesheet" type="text/css" href="https://cdn.udex.services.sap.com/dds/design-tokens/latest/themes/sap_glow/css_variables.css">
+
+<!-- UDEX Fonts -->
+<link rel="stylesheet" href="https://cdn.udex.services.sap.com/dds/design-tokens/latest/css/font-face.css"> 
+
+Why CDN?** The CDN URLs use the `latest` path — every time a page loads, it automatically pulls the most recent UDEX token values. This provides basic auto-sync for token VALUES without any code changes. 
+
+--- 
+
+### 1.2 Key Token Discovery Learnings
+During implementation, several incorrect assumptions were corrected:
+
+Assumption	Reality
+Font token is --udexTypographyFontFamily	Actual token is --sapFontFamily
+Font name is "SAP72"	Actual font name is "72 Brand Variable"
+All tokens use --udex... prefix	Core tokens use --sap... prefix
+Heading tokens use --udexTypographyHeading...	Actual tokens are --sapFontHeader1Size etc.
+Spacer --udexSpacer2 = 0.5rem	Actual value is 2px — number = px value
+Shadow tokens are --udexShadowLvl1	Actual tokens are --sapContent_Shadow0 etc.
+Border radius tokens are --udexBorderRadiusSm	Actual tokens are --udexRadiusXS etc.
+How tokens were discovered:
+
+fetch('https://cdn.udex.services.sap.com/dds/design-tokens/latest/themes/sap_glow/css_variables.css')
+  .then(r => r.text())
+  .then(t => {
+    const lines = t.split('\n').filter(l => l.toLowerCase().includes('font'));
+    console.log(lines.slice(0, 30).join('\n'));
+  })
+Total tokens in sap_glow theme: 1,197
+
+--- 
+
+### 1.3 Content Security Policy (CSP) Fix 
+Updated CSP in head.html to allow UDEX CDN:
+
+<meta http-equiv="Content-Security-Policy" content="
+  script-src 'nonce-aem' 'strict-dynamic' 'unsafe-inline' http: https:;
+  style-src 'self' 'unsafe-inline' https://cdn.udex.services.sap.com;
+  font-src 'self' https://cdn.udex.services.sap.com;
+  base-uri 'self';
+  object-src 'none';
+  frame-src 'self' https:;
+  require-trusted-types-for 'script';"
+  move-to-http-header="true"/>
+
+### 1.4 UDEX-Aligned Template Page 
+
+Created `templates/udex-page-template.html` in DA with these sections: 
+
+| Section | Block Used | Purpose | 
+|---------|-----------|---------| 
+| Hero | `hero center` | Page title, description, CTA with image | 
+| Feature Cards | `card` | 3 feature cards | 
+| Two Column | `columns` | Side-by-side content | 
+| FAQ | `accordion` | Expandable Q&A items | 
+| CTA | plain section | Call to action | 
+| Metadata | `metadata` | SEO title, description, template tag | 
+
+--- 
+
+### 1.5 EDS Block Fixes 
+
+Both accordion.js and card.js had incorrect function names:
+
+// ❌ Wrong — EDS cannot call this
+export default function init(el) { ... }
+
+// ✅ Correct — EDS always calls decorate
+export default function decorate(block) { ... }
+Rule: EDS block loader always calls export default function decorate(block). 
+
+--- 
+
+### 1.6 Governance Check Results 
+
+Basic governance check on `templates/udex-page-template`: 
+| Check | Result | 
+|-------|--------| 
+| H1 Count | ✅ Pass | 
+| Lorem Ipsum | ✅ Pass | 
+| SEO Title | ✅ Pass | 
+| SEO Description | ✅ Pass | 
+
+**Note:** AI-powered brand checks (design token validation, tone of voice) require a brand to be configured in Experience Context. 
+
+--- 
+
+### Complete UDEX Token Mapping (COMPLETED ✅)
+Replaced incomplete initial mapping with full verified token mapping in styles/styles.css.
+
+Verified token values (console checks):
+
+Token	Expected	Actual
+--color-brand-primary	#0070F2	✅ #0070F2
+--color-text	#223548	✅ #223548
+--color-link	#0057D2	✅ #0057D2
+--color-button-background	#FFFFFF	✅ #FFFFFF
+--spacing-xs	4px	✅ 4px
+--spacing-md	16px	✅ 16px
+--spacing-xxl	48px	✅ 48px
+--shadow-sm	0px 2px 4px...	✅ correct
+--shadow-md	0px 2px 8px...	✅ correct
+Complete token categories mapped:
+
+Colors: brand, highlight, background, text, link, button, border, tile
+Typography: font families (base, header, bold, light), heading sizes h1–h6, body sizes xxs–base
+Spacing: full --udexSpacer* scale (2px–96px) + semantic aliases
+Grid margins: xs–xl
+Border radius: xxs–xxl + component-specific (button, field, tile)
+Border width: xs, sm
+Shadows: sm, md, lg, xl
+
+### Header/Footer Guard (COMPLETED ✅)
+Problem: EDS honours header: off metadata on any page — including event pages. Locking the fragment files is not enough.
+
+Solution: Added guardEventPageLayout() to scripts/scripts.js:
+
+function guardEventPageLayout() {
+  const path = window.location.pathname;
+  const isEventPage = path.startsWith('/events/');
+  if (!isEventPage) return;
+
+  const metaTags = document.querySelectorAll('meta[name="header"], meta[name="footer"]');
+  metaTags.forEach((meta) => {
+    const name = meta.getAttribute('name');
+    const value = meta.getAttribute('content')?.trim().toLowerCase();
+    if (value === 'off' || value === '') {
+      console.warn(`[Guard] Blocked attempt to set "${name}: ${value}" on event page ${path}`);
+      meta.remove();
+    }
+  });
+}
+
+// Run immediately before EDS processes meta tags
+guardEventPageLayout();
+Test page: events/test-event/index.html
+
+Has header: off and footer: off in metadata
+Guard successfully blocks both — header and footer remain visible ✅
+Console warning confirmed ✅
+Key learning: EDS converts .metadata block to <meta> tags before scripts run — guard must check <meta> tags, not .metadata divs.
+
+### Folder Permissions for Shared Parts (🔜 TODO)
+Goal: Lock shared folders so only admins can edit header, footer, templates and schedules.
+
+| Folder | Access Level	| Config Location |
+|--------|--------------|-----------------| 
+| fragments/nav/ | Admin only | fragments/nav/ config sheet |
+| templates/ | Admin only | templates/ config sheet |
+| schedules/ | Admin only | schedules/ config sheet |
+| events/ | Edit (event owners)	| Inherited from root .da/config |
+
+Each locked folder needs a config sheet with only the admin row — no edit row.
+
+### Event Template Set Structure (🔜 TODO — pending client input)
+
+| Template	| Path	| Status | 
+|-----------|-------|--------| 
+| Landing page | templates/event-landing | Pending |
+|Agenda page | templates/event-agenda | Pending |
+|Speakers page | templates/event-speakers | Pending |
+|Sponsors page | templates/event-sponsors | Pending |
+|Registration page | templates/event-registration |Pending (topic 08) |
+|Thank-you page	| templates/event-thankyou |Pending (topic 08) |
+|FAQ page | templates/event-faq	Pending | Blocked by: Client alignment on template rules. |
+
+## Phase 2 — Semi-Automated Token Change Detection (NEXT 🔜)
+
+Goal :
+Build a script that monitors UDEX npm package for version changes, compares token snapshots and alerts when updates happen.
+
+Implementation Plan
+Step 1 — Version Monitoring Script
+File: scripts/check-udex-updates.js
+
+const latestVersion = await fetchNpmVersion('@sapudex/design-tokens');
+const storedVersion = readFile('udex-version.json');
+if (latestVersion !== storedVersion) {
+  console.log(`UDEX updated: ${storedVersion} → ${latestVersion}`);
+  await compareTokenSnapshots();
+  await generateChangeReport();
+  updateStoredVersion(latestVersion);
+}
+Step 2 — Token Snapshot Comparison
+File: udex-tokens-snapshot.json
+
+Compare current vs stored snapshot to detect added, removed and renamed tokens.
+
+Step 3 — Change Report Output
+📦 UDEX Update Detected: v1.2.3 → v1.3.0
+✅ New tokens added (3): --udexNewColorToken ...
+❌ Tokens removed (1): --udexOldColorToken
+⚠️  Action needed: Update styles.css mappings
+Step 4 — GitHub Actions Automation
+File: .github/workflows/check-udex.yml
+
+name: Check UDEX Updates
+on:
+  schedule:
+    - cron: '0 9 * * *'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: node scripts/check-udex-updates.js
+      - name: Create Issue if changes found
+        if: steps.check.outputs.changes == 'true'
+        uses: actions/github-script@v6
+
+
+## Phase 3 — Fully Automated Design Sync (FUTURE 🚀)
+
+Goal :
+Zero manual intervention — agent automatically detects, applies and validates UDEX updates end to end.
+
+Architecture
+UDEX CDN / npm registry
+         ↓
+Change Detection Agent (runs daily)
+         ↓
+Token Diff Engine (compare snapshots)
+         ↓
+Auto-Update styles.css + DA templates
+         ↓
+Governance Check on all pages
+         ↓
+PR raised for review + notification sent
+         ↓
+Human approves → merged to main → published
+
+---
+
+## Useful URLs
+
+| Description | URL |
+|-------------|-----|
+| DA Repo | https://da.live/#/shubhangigaikar25/eds |
+| Template Page (Preview) | https://exercise-demo--eds--shubhangigaikar25.aem.page/templates/udex-page-template |
+|Test Event Page | https://exercise-demo--eds--shubhangigaikar25.aem.page/events/test-event/ |
+| UDEX Design Tokens Docs | https://udextest.z6.web.core.windows.net/v2/index.html |
+| UDEX CDN Tokens | https://cdn.udex.services.sap.com/dds/design-tokens/latest/themes/sap_glow/css_variables.css |
+| UDEX CDN Fonts | https://cdn.udex.services.sap.com/dds/design-tokens/latest/css/font-face.css |
+| GitHub Repo | https://github.com/ShubhangiGaikar25/eds/tree/exercise-demo |
+
+---
+
+## Key Learnings
+
+- **EDS block functions must be named decorate — not init or anything else
+- **UDEX core tokens use --sap... prefix — not --udex... for fonts and headings
+- **Font name is "72 Brand Variable" — not "SAP72"
+- **CDN latest path auto-updates token VALUES — but not token NAMES
+- **CSP must explicitly allow cdn.udex.services.sap.com for fonts and styles
+- **Branch-specific preview URLs — https://<branch>--<repo>--<org>.aem.page
+- **DA config sheet tab must be named exactly config (lowercase)
+- **Fragments must be previewed and published before pages that depend on them
+- **DA org-level config ≠ site-level config — collaborator access goes in .da/config
+- **Config sheets don't need preview — saving is sufficient
+- **UDEX spacer token number = pixel value — --udexSpacer4 = 4px not 1rem
+- **Header/footer guard must check <meta> tags — not .metadata block divs
+- **Block name in HTML must exactly match folder/file name
+- **DA .da folder is hidden in file browser but accessible via direct URL
