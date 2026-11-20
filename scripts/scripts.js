@@ -43,32 +43,30 @@ const decorateArea = ({ area = document }) => {
 };
 
 // Guard: prevent event pages from overriding header or footer via metadata
+// Runs immediately before EDS processes meta tags
 function guardEventPageLayout() {
   const path = window.location.pathname;
   const isEventPage = path.startsWith('/events/');
 
   if (!isEventPage) return;
 
-  // Find and remove any metadata that tries to override header or footer
-  const metaBlocks = document.querySelectorAll('.metadata, .section-metadata');
-  metaBlocks.forEach((block) => {
-    const rows = block.querySelectorAll(':scope > div');
-    rows.forEach((row) => {
-      const key = row.children[0]?.textContent?.trim().toLowerCase();
-      const value = row.children[1]?.textContent?.trim().toLowerCase();
+  // Remove any meta tags trying to override header or footer
+  const metaTags = document.querySelectorAll('meta[name="header"], meta[name="footer"]');
+  metaTags.forEach((meta) => {
+    const name = meta.getAttribute('name');
+    const value = meta.getAttribute('content')?.trim().toLowerCase();
 
-      // Block header/footer override attempts
-      if ((key === 'header' || key === 'footer') && (value === 'off' || value === '')) {
-        console.warn(`[Guard] Blocked attempt to set "${key}: ${value}" on event page ${path}`);
-        row.remove();
-      }
-    });
+    if (value === 'off' || value === '') {
+      console.warn(`[Guard] Blocked attempt to set "${name}: ${value}" on event page ${path}`);
+      meta.remove();
+    }
   });
 }
 
+// Run guard immediately before EDS processes meta tags
+guardEventPageLayout();
+
 export async function loadPage() {
-  // Run guard before loading area
-  guardEventPageLayout();
   setConfig({ hostnames, locales, linkBlocks, components, decorateArea });
   await loadArea();
 }
