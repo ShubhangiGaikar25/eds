@@ -42,7 +42,33 @@ const decorateArea = ({ area = document }) => {
   eagerLoad(area, 'img');
 };
 
+// Guard: prevent event pages from overriding header or footer via metadata
+function guardEventPageLayout() {
+  const path = window.location.pathname;
+  const isEventPage = path.startsWith('/events/');
+
+  if (!isEventPage) return;
+
+  // Find and remove any metadata that tries to override header or footer
+  const metaBlocks = document.querySelectorAll('.metadata, .section-metadata');
+  metaBlocks.forEach((block) => {
+    const rows = block.querySelectorAll(':scope > div');
+    rows.forEach((row) => {
+      const key = row.children[0]?.textContent?.trim().toLowerCase();
+      const value = row.children[1]?.textContent?.trim().toLowerCase();
+
+      // Block header/footer override attempts
+      if ((key === 'header' || key === 'footer') && (value === 'off' || value === '')) {
+        console.warn(`[Guard] Blocked attempt to set "${key}: ${value}" on event page ${path}`);
+        row.remove();
+      }
+    });
+  });
+}
+
 export async function loadPage() {
+  // Run guard before loading area
+  guardEventPageLayout();
   setConfig({ hostnames, locales, linkBlocks, components, decorateArea });
   await loadArea();
 }
