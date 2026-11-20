@@ -55,41 +55,121 @@
 }
 
 :root {
-   /* ===== UDEX Design Token Mappings ===== */
-   /* Colors */
-  --color-brand-primary: var(--udexColorBrandSapGold500, #f0ab00);
-  --color-background: var(--udexColorNeutralWhite, #ffffff);
-  --color-text: var(--udexColorNeutralGrey900, #1d2d3e);
-  --color-link: var(--udexColorBlueSapBlue500, #0070f2);
+  /* ============================================
+   UDEX DESIGN TOKEN MAPPINGS
+   Source: SAP Glow theme (sap_glow)
+   CDN: cdn.udex.services.sap.com/dds/design-tokens/latest
+   ============================================ */
 
-  /* Typography */
-  /* --font-family-base: var(--udexTypographyFontFamily, 'SAP72', sans-serif); */
+   /* Colors — Brand & Highlight */
+  --color-brand-primary: var(--sapBrandColor, #0070F2);
+  --color-highlight: var(--sapHighlightColor, #0070F2);
+
+  /* Colors — Background */
+  --color-background: var(--sapBackgroundColor, #FFFFFF);
+  --color-background-default: var(--sapBackgroundColorDefault, #F7F7F7);
+  --color-tile-background: var(--sapTile_Background, #FFFFFF);
+
+  /* Colors — Text,Links,Buttons */
+  --color-text: var(--sapTextColor, #223548);
+  --color-link: var(--sapLinkColor, #0057D2);
+  --color-button-background: var(--sapButton_Background, #FFFFFF);
+  --color-button-border: var(--sapButton_BorderColor, #475E75);
+  --color-button-text: var(--sapButton_TextColor, #0040B0);
+
+  /* Colors — Borders */
+  --color-border-default: var(--udexCoreBorderDefault, #5B738B);
+  --color-tile-border: var(--sapTile_BorderColor, #EAECEE);
+
+  /* Base */
+  /* --color-base: var(--sapBaseColor, #FFFFFF); */
+
+  /* TYPOGRAPHY  — Font Family */
   --font-family-base: var(--sapFontFamily, '72 Brand Variable', sans-serif);
-  --font-size-base: var(--udexTypographyBodyMFontSize, 1rem);
-  /* --font-size-h1: var(--udexTypographyHeadingXXLFontSize, 3rem);
-  --font-size-h2: var(--udexTypographyHeadingXLFontSize, 2.25rem);
-  --font-size-h3: var(--udexTypographyHeadingLFontSize, 1.75rem); */
-  -font-size-h1: var(--sapFontHeader1Size, 3rem);
-  --font-size-h2: var(--sapFontHeader2Size, 2.25rem);
-  --font-size-h3: var(--sapFontHeader3Size, 1.75rem);
+  --font-family: var(--sapFontFamily, '72 Brand Variable', montserrat, sans-serif);
+  --font-family-header: var(--sapFontHeaderFamily, '72 Brand Variable', sans-serif);
+  --font-family-bold: var(--sapFontBoldFamily, '72 Brand Variable', sans-serif);
+  --font-family-light: var(--sapFontLightFamily, '72 Brand Variable', sans-serif);
 
-    /* Spacing */
-  --spacing-xs: var(--udexSpacer2, 0.5rem);
-  --spacing-sm: var(--udexSpacer4, 1rem);
-  --spacing-md: var(--udexSpacer6, 1.5rem);
-  --spacing-lg: var(--udexSpacer8, 2rem);
-  --spacing-xl: var(--udexSpacer12, 3rem);
+  /* TYPOGRAPHY  — Heading Sizes */
+  --font-size-h1: var(--sapFontHeader1Size, 32px);
+  --font-size-h2: var(--sapFontHeader2Size, 28px);
+  --font-size-h3: var(--sapFontHeader3Size, 24px);
+  --font-size-h4: var(--sapFontHeader4Size, 20px);
+  --font-size-h5: var(--sapFontHeader5Size, 18px);
+  --font-size-h6: var(--sapFontHeader6Size, 16px);
+
+
+  /* TYPOGRAPHY  — Body Sizes */
+  --font-size-base: var(--udexTypographyBodyMFontSize, 18px);
+  --font-size-sm: var(--udexTypographyBodySFontSize, 16px);
+  --font-size-xs: var(--udexTypographyBodyXSFontSize, 14px);
+  --font-size-xxs: var(--udexTypographyBodyXXSFontSize, 12px);
+  --font-size-lg: var(--sapFontLargeSize, 1rem);
+
+  /* Spacing  — Full UDEX Spacer scale (number = actual px value) */
+  --spacing-2: var(--udexSpacer2, 2px);
+  --spacing-4: var(--udexSpacer4, 4px);
+  --spacing-8: var(--udexSpacer8, 8px);
+  --spacing-12: var(--udexSpacer12, 12px);
+  --spacing-16: var(--udexSpacer16, 16px);
+  --spacing-20: var(--udexSpacer20, 20px);
+  --spacing-24: var(--udexSpacer24, 24px);
+  --spacing-32: var(--udexSpacer32, 32px);
+  --spacing-40: var(--udexSpacer40, 40px);
+  --spacing-48: var(--udexSpacer48, 48px);
+  --spacing-56: var(--udexSpacer56, 56px);
+  --spacing-64: var(--udexSpacer64, 64px);
+  --spacing-72: var(--udexSpacer72, 72px);
+  --spacing-84: var(--udexSpacer84, 84px);
+  --spacing-96: var(--udexSpacer96, 96px);
+
+  /* Spacing  — Semantic aliases */
+  --spacing-xs: var(--udexSpacer4, 4px);
+  --spacing-sm: var(--udexSpacer8, 8px);
+  --spacing-md: var(--udexSpacer16, 16px);
+  --spacing-lg: var(--udexSpacer24, 24px);
+  --spacing-xl: var(--udexSpacer32, 32px);
+  --spacing-xxl: var(--udexSpacer48, 48px);
+
+  /* Grid / Layout */
+  --grid-margin-xs: var(--udexGridXSMargins, 24px);
+  --grid-margin-sm: var(--udexGridSMargins, 48px);
+  --grid-margin-md: var(--udexGridMMargins, 72px);
+  --grid-margin-lg: var(--udexGridLMargins, 72px);
+  --grid-margin-xl: var(--udexGridXLMargins, 84px);
 
   /* Border Radius */
-  --border-radius-sm: var(--udexBorderRadiusSm, 4px);
-  --border-radius-md: var(--udexBorderRadiusMd, 8px);
+  --border-radius-xxs: var(--udexRadiusXXS, 2px);
+  --border-radius-xs: var(--udexRadiusXS, 4px);
+  --border-radius-sm: var(--udexRadiusS, 6px);
+  --border-radius-md: var(--udexRadiusM, 8px);
+  --border-radius-lg: var(--udexRadiusL, 12px);
+  --border-radius-xl: var(--udexRadiusXL, 16px);
+  --border-radius-xxl: var(--udexRadiusXXL, 24px);
+  --border-radius-button: var(--sapButton_BorderCornerRadius, 0.5rem);
+  --border-radius-field: var(--sapField_BorderCornerRadius, 0.25rem);
+  --border-radius-tile: var(--sapTile_BorderCornerRadius, 1rem);
+  --border-radius-popover: var(--sapPopover_BorderCornerRadius, 0.5rem);
+
+  /* Border Width */
+  --border-width-xs: var(--udexCoreSizeBorderXS, 1px);
+  --border-width-sm: var(--udexCoreSizeBorderS, 2px);
 
   /* Shadows */
-  --shadow-sm: var(--udexShadowLvl1, 0 1px 4px rgba(0,0,0,0.1));
-  --shadow-md: var(--udexShadowLvl2, 0 4px 16px rgba(0,0,0,0.15));
+  --shadow-0: var(--sapContent_Shadow0, 0px 2px 4px 0px rgba(34, 53, 72, 0.2));
+  --shadow-1: var(--sapContent_Shadow1, 0px 2px 8px 0px rgba(34, 53, 72, 0.3));
+  --shadow-2: var(--sapContent_Shadow2, 0px 10px 30px 0px rgba(34, 53, 72, 0.25));
+  --shadow-3: var(--sapContent_Shadow3, 0px 20px 80px 0px rgba(34, 53, 72, 0.25));
+
+  /* Semantic shadow aliases */
+  --shadow-sm: var(--sapContent_Shadow0, 0px 2px 4px 0px rgba(34, 53, 72, 0.2));
+  --shadow-md: var(--sapContent_Shadow1, 0px 2px 8px 0px rgba(34, 53, 72, 0.3));
+  --shadow-lg: var(--sapContent_Shadow2, 0px 10px 30px 0px rgba(34, 53, 72, 0.25));
+  --shadow-xl: var(--sapContent_Shadow3, 0px 20px 80px 0px rgba(34, 53, 72, 0.25));
 
   /* ===== UDEX Design Token Mappings ends here ===== */
-
+  
   /* grid */
   --grid-container-width: 83.4%;
   --grid-column-width: calc(var(--grid-container-width) / 12);
