@@ -42,24 +42,22 @@ const decorateArea = ({ area = document }) => {
   eagerLoad(area, 'img');
 };
 
-// Guard: prevent event pages from overriding header or footer via metadata
-// Runs immediately before EDS processes meta tags
+// Guard: prevent event pages from overriding header or footer from metadata
 function guardEventPageLayout() {
   const path = window.location.pathname;
-  const isEventPage = path.startsWith('/events/');
+
+  // Match /events/ with optional locale prefix e.g. /de/events/, /fr/events/
+  const isEventPage = /^\/([\w-]+\/)?events\//.test(path);
 
   if (!isEventPage) return;
 
-  // Remove any meta tags trying to override header or footer
+  // Remove ANY header or footer meta tag — regardless of value
   const metaTags = document.querySelectorAll('meta[name="header"], meta[name="footer"]');
   metaTags.forEach((meta) => {
     const name = meta.getAttribute('name');
-    const value = meta.getAttribute('content')?.trim().toLowerCase();
-
-    if (value === 'off' || value === '') {
-      console.warn(`[Guard] Blocked attempt to set "${name}: ${value}" on event page ${path}`);
-      meta.remove();
-    }
+    const value = meta.getAttribute('content')?.trim();
+    console.warn(`[Guard] Blocked "${name}: ${value}" on event page ${path}`);
+    meta.remove();
   });
 }
 
