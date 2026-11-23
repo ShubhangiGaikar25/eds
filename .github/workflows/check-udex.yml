@@ -1,0 +1,43 @@
+name: Check UDEX Design Token Updates
+
+on:
+  # Run every Monday at 9:00 UTC
+  schedule:
+    - cron: '0 9 * * 1'
+
+  # Allow manual trigger from GitHub Actions UI
+  workflow_dispatch:
+
+jobs:
+  check-udex:
+    name: Check for UDEX token changes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run UDEX token check
+        id: check
+        run: node scripts/check-udex-updates.js
+        # Exit code 0 = no changes, 1 = changes found, 2 = error
+        continue-on-error: true
+
+      - name: Create GitHub Issue if changes found
+        if: steps.check.outputs.changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issue } = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔔 UDEX Design Token Update Detected',
+              body: `## UDEX Token Changes Detected\n\nA new version of \`@sapudex/design-tokens\` has been released.\n\n### Action Required\n1. Review the changes in the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n2. Check if any tokens used in \`styles/styles.css\` were added, removed, or renamed\n3. Update mappings if needed on \`exercise-demo\` branch\n4. Test on preview URL before merging to \`main\`\n\n### Reminder\n- Pin \`head.html\` CDN links to the new version after testing\n- Run governance checks on all event pages after updating\n\n> This issue was created automatically by the UDEX token monitor.`,
+              labels: ['udex-update', 'design-tokens'],
+            });
+            console.log(`Created issue #${issue.number}: ${issue.html_url}`);
