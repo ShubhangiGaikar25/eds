@@ -1,0 +1,42 @@
+name: Check UDEX Design Token Updates
+
+on:
+  schedule:
+    - cron: '0 9 * * 1' # Every Monday at 9:00 UTC
+  workflow_dispatch:     # Allow manual trigger
+
+jobs:
+  check-udex:
+    name: Check for UDEX token changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write    # needed to push files
+      pull-requests: write # needed to create PRs
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.UDEX_GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run UDEX token check
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.UDEX_GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/check-udex-updates.js
+        continue-on-error: true
+
+      - name: Commit downloaded UDEX files if changes found
+        if: steps.check.outputs.changes == 'true'
+        run: |
+          git config user.name "UDEX Token Monitor"
+          git config user.email "udex-monitor@noreply.github.com"
+          git add styles/udex/ styles/fonts/udex/ head.html udex-tokens-snapshot.json udex-version.json
+          git commit -m "chore: update UDEX bundles to ${{ env.NEW_VERSION }}"
+          git push origin HEAD:udex-${{ env.NEW_VERSION }}
