@@ -32,10 +32,11 @@ Build an EDS-based site that:
 | Complete UDEX Token Mapping (all categories) | ✅ Done |
 | Header/Footer Guard—improved (any value + locale prefixes) | ✅ Done |
 | CDN version pinned to `v2.64.0` | ✅ Done |
+| UDEX files hosted locally (no CDN dependency) | ✅ Done |
+| Semi-Automated Token Monitoring | ✅ Done |
 | Folder Permissions for Shared Parts | 🔜 Task 3 (approach corrected) |
 | Event Template Set Structure | 🔜 Task 4 (pending client) |
 | UDEX Level 2 + Level 3 blocks | 🔜 Task 5 (new) |
-| Semi-Automated Token Monitoring | 🔜 Phase 2 |
 | Fully Automated Design Sync | 🔜 Phase 3 (scope reduced) |
 
 ---
@@ -56,18 +57,7 @@ Build an EDS-based site that:
 
 ### 1.1 UDEX CDN Integration
 
-Added the following CDN links to `head.html`, pinned to fixed version `v2.64.0`:
-
-```html
-<link
-  rel="stylesheet"
-  href="https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/css/font-face.css"
->
-<link
-  rel="stylesheet"
-  href="https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/themes/sap_glow/css_variables.css"
->
-```
+Initially added CDN links to `head.html` pinned to fixed version `v2.64.0`. Later superseded by local hosting (see section 1.14).
 
 **Why pin to a fixed version?**
 
@@ -126,14 +116,14 @@ fetch('https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/themes/sap_gl
 
 ### 1.4 Content Security Policy (CSP) Fix
 
-Updated the CSP in `head.html` to allow the UDEX CDN in the relevant directives:
+Initially updated the CSP in `head.html` to allow the UDEX CDN. After moving to local hosting (section 1.14), the CDN domain was removed and `'self'` is now sufficient:
 
 ```text
-style-src ... https://cdn.udex.services.sap.com;
-font-src  ... https://cdn.udex.services.sap.com;
+style-src 'self' 'unsafe-inline';
+font-src  'self';
 ```
 
-> Preserve the site's existing CSP sources; add the UDEX host to the existing `style-src` and `font-src` directives.
+Removing the CDN domain from CSP reduces the attack surface and removes the external dependency entirely.
 
 ---
 
@@ -340,70 +330,204 @@ After guard: header meta: null, footer meta: null ✅
 
 ---
 
-## Phase 2 — Semi-Automated Token Change Detection (NEXT 🔜)
+### 1.14 UDEX Files Hosted Locally (COMPLETED ✅)
+
+**Problem:** Loading UDEX CSS and font files directly from the CDN on every page load creates a cross-origin request that blocks first paint and introduces an external dependency.
+
+**Solution:** Download and commit UDEX files directly into the repository.
+
+**Folder structure:**
+
+```text
+styles/
+├── udex/
+│   └── v2.64.0/
+│       ├── css_variables.css   ← downloaded from CDN
+│       └── font-face.css       ← downloaded from CDN (font URLs rewritten to local)
+└── fonts/
+    └── udex/
+        └── 72BrandVariable_Th-Blk.woff2  ← downloaded from CDN
+```
+
+**Updated `head.html`:**
+
+```html
+<!-- UDEX files served locally — no CDN dependency -->
+<link rel="stylesheet" href="/styles/udex/v2.64.0/font-face.css">
+<link rel="stylesheet" href="/styles/udex/v2.64.0/css_variables.css">
+```
+
+**Font URL rewritten in `font-face.css`:**
+
+```css
+/* BEFORE — CDN */
+src: url('https://cdn.udex.services.sap.com/dds/design-tokens/assets/fonts/72BrandVariable_Th-Blk.woff2');
+
+/* AFTER — local */
+src: url('/styles/fonts/udex/72BrandVariable_Th-Blk.woff2');
+```
+
+**CSP updated — CDN domain removed:**
+
+```text
+style-src 'self' 'unsafe-inline';
+font-src  'self';
+```
+
+**Verified in browser console:**
+
+```text
+// All UDEX files now load from local repo
+https://.../styles/udex/v2.64.0/css_variables.css  ✅ local
+https://.../styles/udex/v2.64.0/font-face.css       ✅ local
+
+// Font still resolving correctly
+Font: "72 Brand Variable", Arial, Helvetica, sans-serif  ✅
+
+// All tokens intact
+Brand color:  #0070F2  ✅
+Text color:   #223548  ✅
+Spacing md:   16px     ✅
+CDN dependency: ✅ fully local
+```
+
+**How Phase 2 CI handles future upgrades:** When a new UDEX version is detected, the CI script automatically downloads the new files, rewrites font paths, updates `head.html`, and opens a PR—no manual steps needed.
+
+---
+
+## Phase 2 — Semi-Automated Token Change Detection (COMPLETED ✅)
 
 ### Goal
 
-Create a weekly CI job that opens a pull request with a token diff when UDEX releases a new version. A human reviews and approves it before merging.
+A weekly CI job that detects new UDEX versions, downloads updated files locally, compares token names, and opens a pull request with all changes for human review and approval.
 
-### Implementation Plan
+### What Was Built
 
-#### Step 1 — Version Monitoring Script
+#### 1. Version Store — `udex-version.json`
 
-**File:** `scripts/check-udex-updates.js`
+Stores the currently deployed UDEX version:
 
-```javascript
-const latestVersion = await fetchNpmVersion('@sapudex/design-tokens');
-const storedVersion = readFile('udex-version.json');
-
-if (latestVersion !== storedVersion) {
-  console.log(`UDEX updated: ${storedVersion} → ${latestVersion}`);
-  await compareTokenSnapshots();
-  await generateChangeReport();
-  updateStoredVersion(latestVersion);
+```json
+{
+  "version": "v2.64.0",
+  "lastChecked": "2025-01-01T00:00:00.000Z"
 }
 ```
 
-#### Step 2 — Token Snapshot Comparison
+#### 2. Token Snapshot — `udex-tokens-snapshot.json`
 
-Compare the current snapshot with the stored snapshot to detect added, removed, and renamed tokens.
+Stores all 1,197 token names from `v2.64.0` as a baseline for future comparison.
 
-#### Step 3 — Change Report + PR
+#### 3. Monitoring Script — `scripts/check-udex-updates.js`
 
-```text
-📦 UDEX Update Detected: v2.64.0 → v2.65.0
+What the script does on each run:
 
-✅ New tokens added (3):
---udexNewColorToken
-...
+1. Checks the npm registry for the latest `@sapudex/design-tokens` version.
+2. If it is the same as the stored version, exits cleanly with no action needed.
+3. If a new version is found:
+   - Downloads `css_variables.css` to `styles/udex/<version>/`.
+   - Downloads `font-face.css` to `styles/udex/<version>/` and rewrites font URLs to local paths.
+   - Downloads `.woff2` font files to `styles/fonts/udex/`.
+   - Updates `head.html` to point to the new version.
+   - Compares token names and generates a diff report.
+   - Updates `udex-tokens-snapshot.json` and `udex-version.json`.
+   - Opens a PR via the GitHub API titled `chore: udex-<version>`.
 
-❌ Tokens removed (1):
---udexOldColorToken
+**How to run manually:**
 
-⚠️ Action needed: Review and update styles.css mappings
+```bash
+node scripts/check-udex-updates.js
 ```
 
-#### Step 4 — GitHub Actions Weekly Schedule
+**How to simulate a version change for testing:**
 
-**File:** `.github/workflows/check-udex.yml`
+```bash
+# 1. Edit udex-version.json — change version to v2.63.0
+# 2. Run the script
+node scripts/check-udex-updates.js
+# 3. Revert udex-version.json back to v2.64.0
+```
+
+#### 4. GitHub Actions Workflow — `.github/workflows/check-udex.yml`
 
 ```yaml
-name: Check UDEX Updates
+name: Check UDEX Design Token Updates
 
 on:
   schedule:
-    - cron: '0 9 * * 1' # Every Monday at 9:00 UTC
+    - cron: '0 9 * * 1'  # Every Monday at 9:00 UTC
+  workflow_dispatch:       # Allow manual trigger
 
 jobs:
-  check:
+  check-udex:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v3
-      - run: node scripts/check-udex-updates.js
-      - name: Create PR if changes found
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.UDEX_GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run UDEX token check
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ secrets.UDEX_GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/check-udex-updates.js
+        continue-on-error: true
+      - name: Commit downloaded UDEX files if changes found
         if: steps.check.outputs.changes == 'true'
-        uses: actions/github-script@v6
+        run: |
+          git config user.name "UDEX Token Monitor"
+          git config user.email "udex-monitor@noreply.github.com"
+          git add styles/udex/ styles/fonts/udex/ head.html udex-tokens-snapshot.json udex-version.json
+          git commit -m "chore: update UDEX bundles"
+          git push origin HEAD
 ```
+
+### Change Report Format
+
+When a new version is detected, the script outputs:
+
+```text
+📦 UDEX Token Change Report
+────────────────────────────────────────────────────────────
+  Previous version : v2.64.0
+  New version      : v2.65.0
+  Total tokens     : 3 changes
+────────────────────────────────────────────────────────────
+
+✅ New tokens added (3):
+   --udexNewColorToken
+   --udexNewSpacingToken
+   --udexNewBorderToken
+
+❌ Tokens removed (1):
+   --udexOldColorToken
+
+⚠️ Action needed:
+   1. Review added/removed tokens above
+   2. Update styles/styles.css mappings if needed
+   3. Test on exercise-demo branch before merging to main
+────────────────────────────────────────────────────────────
+```
+
+### Rollback Strategy
+
+Rollback = **revert the PR**. No content republishing is needed—only code changes.
+
+### Test Results
+
+| Test | Result |
+|---|---|
+| Script runs with no changes | ✅ Exits cleanly |
+| Version change simulation | ✅ Downloads files, generates diff, updates `head.html` |
+| GitHub Actions manual trigger | ✅ Job succeeds |
+| UDEX files load from local repo | ✅ Confirmed in browser console |
+| CDN dependency removed | ✅ Confirmed |
 
 ---
 
@@ -458,7 +582,7 @@ Notification sent—pages needing review are flagged
 
 | # | Question | Owner | Blocks |
 |---|---|---|---|
-| Q7 | Which UDEX version do we start on (`v2.64.0`)? Who owns upgrades? | Client | Phase 2 |
+| Q7 | Which UDEX version do we start on? **Resolved:** `v2.64.0` | — | — |
 | Q8 | Which themes are needed—`sap_glow` only, or also morning, evening, and high-contrast? | Client | Token mapping |
 | Q9 | Header/footer—use UDEX Masthead/Footer components or reuse shared `sap.com` fragments? | Client | Templates |
 | Q10 | What are the accessibility targets (WCAG level), page-speed targets, analytics requirements, and cookie-consent requirements? | Client | Task 5 |
@@ -486,9 +610,10 @@ Notification sent—pages needing review are flagged
 | Template Page | [https://exercise-demo--eds--shubhangigaikar25.aem.page/templates/udex-page-template](https://exercise-demo--eds--shubhangigaikar25.aem.page/templates/udex-page-template) |
 | Test Event Page | [https://exercise-demo--eds--shubhangigaikar25.aem.page/events/test-event/](https://exercise-demo--eds--shubhangigaikar25.aem.page/events/test-event/) |
 | UDEX Design Tokens Docs | [https://udextest.z6.web.core.windows.net/v2/index.html](https://udextest.z6.web.core.windows.net/v2/index.html) |
-| UDEX CDN Tokens (pinned) | [https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/themes/sap_glow/css_variables.css](https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/themes/sap_glow/css_variables.css) |
-| UDEX CDN Fonts (pinned) | [https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/css/font-face.css](https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/css/font-face.css) |
+| UDEX CDN Tokens (reference) | [https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/themes/sap_glow/css_variables.css](https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/themes/sap_glow/css_variables.css) |
+| UDEX CDN Fonts (reference) | [https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/css/font-face.css](https://cdn.udex.services.sap.com/dds/design-tokens/v2.64.0/css/font-face.css) |
 | GitHub Repo | [https://github.com/ShubhangiGaikar25/eds/tree/exercise-demo](https://github.com/ShubhangiGaikar25/eds/tree/exercise-demo) |
+| GitHub Actions | [https://github.com/ShubhangiGaikar25/eds/actions](https://github.com/ShubhangiGaikar25/eds/actions) |
 
 ---
 
@@ -499,16 +624,19 @@ Notification sent—pages needing review are flagged
 3. **UDEX core tokens use the `--sap...` prefix**—not `--udex...` for fonts and headings.
 4. **The font name is `"72 Brand Variable"`**, not `"SAP72"`.
 5. **The CDN must be pinned to a fixed version.** Use `v2.64.0` with the `v` prefix. `latest` is risky, and `/2.64.0/` without the `v` returns 404.
-6. **CSP must explicitly allow `cdn.udex.services.sap.com`** for fonts and styles.
-7. **Branch-specific preview URLs** use the pattern `https://<branch>--<repo>--<owner>.aem.page`.
-8. **The DA config-sheet tab must be named exactly `config`** (lowercase).
-9. **Fragments must be previewed and published** before pages that depend on them.
-10. **DA org-level config ≠ site-level config.** Collaborator access goes in `.da/config`.
-11. **Config sheets do not need to be previewed.** Saving is sufficient.
-12. **A UDEX spacer token's number is its pixel value.** `--udexSpacer4` = `4px`, not `1rem`.
-13. **The header/footer guard must check `<meta>` tags**, not `.metadata` block `div` elements; EDS converts metadata before scripts run.
-14. **The guard must block any value**, not only `off`. Fragment-path swaps such as `header: /other/nav` must also be blocked.
-15. **The guard must cover locale prefixes**, including `/de/events/` and `/fr/events/`, using the regex `/^\/([\w-]+\/)?events\//`.
-16. **DA has no per-folder config sheets.** All permissions live in one `permissions` sheet in the org config at `da.live/config`.
-17. **UDEX has three integration levels:** Tokens (CSS only) → Plain HTML styled as UDEX → Web Components (JavaScript; load only when needed).
-18. **Phase 3 auto-rewrite changes must remain human-approved.** Templates are content, not code; automatic rewriting conflicts with governance.
+6. **Cross-origin CDN stylesheets block first paint**—host UDEX CSS and font files locally in the repo instead of loading from the CDN at runtime.
+7. **Font URLs inside `font-face.css` must be rewritten** to local paths after downloading from the CDN.
+8. **CSP can be simplified after moving to local hosting**—`'self'` is sufficient; the CDN domain is no longer needed.
+9. **GitHub Actions workflows must be on the `main` branch** to be registered and appear in the Actions tab.
+10. **Branch-specific preview URLs** use the pattern `https://<branch>--<repo>--<owner>.aem.page`.
+11. **The DA config-sheet tab must be named exactly `config`** (lowercase).
+12. **Fragments must be previewed and published** before pages that depend on them.
+13. **DA org-level config ≠ site-level config.** Collaborator access goes in `.da/config`.
+14. **Config sheets do not need to be previewed.** Saving is sufficient.
+15. **A UDEX spacer token's number is its pixel value.** `--udexSpacer4` = `4px`, not `1rem`.
+16. **The header/footer guard must check `<meta>` tags**, not `.metadata` block `div` elements; EDS converts metadata before scripts run.
+17. **The guard must block any value**, not only `off`. Fragment-path swaps such as `header: /other/nav` must also be blocked.
+18. **The guard must cover locale prefixes**, including `/de/events/` and `/fr/events/`, using the regex `/^\/([\w-]+\/)?events\//`.
+19. **DA has no per-folder config sheets.** All permissions live in one `permissions` sheet in the org config at `da.live/config`.
+20. **UDEX has three integration levels:** Tokens (CSS only) → Plain HTML styled as UDEX → Web Components (JavaScript; load only when needed).
+21. **Phase 3 auto-rewrite changes must remain human-approved.** Templates are content, not code; automatic rewriting conflicts with governance.
