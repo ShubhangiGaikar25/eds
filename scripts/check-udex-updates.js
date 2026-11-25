@@ -336,10 +336,10 @@ async function main() {
     // Step 10 — Signal GitHub Actions
     if (process.env.GITHUB_OUTPUT) {
       const { appendFileSync } = await import('fs');
-      appendFileSync(process.env.GITHUB_OUTPUT, 'changes=true\n');
+      appendFileSync(process.env.GITHUB_OUTPUT, `changes=true\nnew_version=${latestVersion}\n`);
     }
 
-    process.exit(1);
+    process.exit(0);
 
   } catch (err) {
     console.error('❌ Error:', err.message);
