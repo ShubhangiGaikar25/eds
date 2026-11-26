@@ -54,3 +54,27 @@
 .accordion .accordion-item[open] .accordion-item-body {
     border-top: 1px solid var(--color-gray-300, #dadada);
 }
+
+/* Image right variant — text left, image right when open */
+.accordion.image-right .accordion-item-body {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.accordion.image-right .accordion-item-body p {
+  flex: 1;
+  min-width: 0;
+}
+
+.accordion.image-right .accordion-item-body picture {
+  flex: 1;
+  min-width: 0;
+}
+
+.accordion.image-right .accordion-item-body img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
