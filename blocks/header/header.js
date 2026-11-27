@@ -1,7 +1,7 @@
 import { getConfig, getMetadata } from '../../scripts/ak.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { setColorScheme } from '../section-metadata/section-metadata.js';
-import { getEventRoot } from '../../scripts/utils/event.js';
+import getEventRoot from '../../scripts/utils/event.js';
 
 const { locale } = getConfig();
 
