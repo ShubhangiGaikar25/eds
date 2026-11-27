@@ -302,8 +302,7 @@ export function decorateHeaderContent(header) {
   new ResizeObserver(() => syncDrawerState(header)).observe(header);
 }
 
-//**
- * loads and decorates the header
+/** loads and decorates the header
  * @param {Element} el The header element
  */
 export default async function init(el) {
