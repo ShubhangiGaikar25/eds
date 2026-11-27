@@ -1,0 +1,58 @@
+.sponsors {
+  display: grid;
+  gap: var(--spacing-xl);
+}
+
+.sponsors .sponsors-tier-title {
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-h5);
+  color: var(--color-text);
+}
+
+.sponsors .sponsors-logos {
+  --logo-min: 120px;
+
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--logo-min), 1fr));
+  gap: var(--spacing-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Higher tiers get larger logos */
+.sponsors .sponsors-tier-gold .sponsors-logos {
+  --logo-min: 160px;
+}
+
+.sponsors .sponsors-logos li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 16 / 9;
+  padding: var(--spacing-sm);
+  border: var(--border-width-xs) solid var(--color-tile-border);
+  border-radius: var(--border-radius-tile);
+  background-color: var(--color-tile-background);
+}
+
+.sponsors .sponsors-logos picture,
+.sponsors .sponsors-logos a {
+  display: contents;
+}
+
+.sponsors .sponsors-logos img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (width >= 900px) {
+  .sponsors .sponsors-logos {
+    --logo-min: 140px;
+  }
+
+  .sponsors .sponsors-tier-gold .sponsors-logos {
+    --logo-min: 200px;
+  }
+}

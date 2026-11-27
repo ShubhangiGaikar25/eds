@@ -1,0 +1,9 @@
+/*
+ * HR Connect template styles.
+ * Loaded automatically on pages with "template: hr-connect" in their metadata
+ * (the body gets the class "hr-connect-template").
+ * Keep this for layout that is specific to HR Connect pages; block styles stay in the blocks.
+ */
+.hr-connect-template main > div[id] {
+  scroll-margin-top: var(--header-height);
+}

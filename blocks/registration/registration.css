@@ -1,0 +1,32 @@
+.registration .registration-form {
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius-tile);
+  background-color: var(--color-tile-background);
+}
+
+/* Until the registration service is connected */
+.registration .registration-form[data-status='placeholder'] {
+  border: var(--border-width-sm) dashed var(--color-border-default);
+  color: var(--color-gray-600);
+  text-align: center;
+}
+
+.registration .registration-waitlist {
+  max-width: min(90vw, 520px);
+  padding: var(--spacing-xl);
+  border: none;
+  border-radius: var(--border-radius-popover);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+}
+
+.registration .registration-waitlist::backdrop {
+  background-color: rgb(0 0 0 / 50%);
+}
+
+.registration .registration-waitlist-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-lg) 0 0;
+}

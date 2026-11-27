@@ -1,0 +1,70 @@
+/* Event header: logo, jump links, Register now. Lives inside the fixed <header>. */
+header .event-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  height: var(--header-height);
+  max-width: var(--grid-container-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  box-sizing: border-box;
+}
+
+header .event-header-brand {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  font-family: var(--font-family-bold);
+  font-size: var(--font-size-h4);
+  color: var(--color-brand-primary);
+
+  img {
+    display: block;
+    width: auto;
+    height: 32px;
+  }
+}
+
+/* Jump links: hidden on small screens, where the bar only has room for logo + button */
+header .event-header-nav {
+  display: none;
+  flex: 1;
+
+  ul {
+    display: flex;
+    gap: var(--spacing-lg);
+  }
+
+  a {
+    display: inline-block;
+    padding: var(--spacing-xs) 0;
+    border-bottom: var(--border-width-sm) solid transparent;
+    color: var(--color-text);
+    font-size: var(--font-size-sm);
+  }
+
+  a:hover,
+  a[aria-current] {
+    border-bottom-color: var(--color-brand-primary);
+    color: var(--color-brand-primary);
+  }
+}
+
+header .event-header-actions {
+  margin-inline-start: auto;
+}
+
+/* Keep jump-link targets clear of the fixed header */
+.event-page main > div[id] {
+  scroll-margin-top: var(--header-height);
+}
+
+@media (width >= 900px) {
+  header .event-header-nav {
+    display: block;
+  }
+
+  header .event-header-actions {
+    margin-inline-start: 0;
+  }
+}

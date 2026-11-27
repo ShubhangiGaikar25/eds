@@ -42,21 +42,17 @@ const decorateArea = ({ area = document }) => {
   eagerLoad(area, 'img');
 };
 
-// Guard: prevent event pages from overriding header or footer from metadata
+// Guard: event and blueprint pages can't turn off or swap the header/footer through metadata
 function guardEventPageLayout() {
-  const path = window.location.pathname;
+  const { pathname } = window.location;
 
   // Match /events/ with optional locale prefix e.g. /de/events/, /fr/events/
-  const isEventPage = /^\/([\w-]+\/)?events\//.test(path);
+  const prefixes = Object.keys(locales).filter(Boolean).join('|');
+  const eventPath = new RegExp(`^(?:${prefixes})?/(?:events|blueprints)/[^/]+/`);
+  if (!eventPath.test(pathname)) return;
 
-  if (!isEventPage) return;
-
-  // Remove ANY header or footer meta tag — regardless of value
-  const metaTags = document.querySelectorAll('meta[name="header"], meta[name="footer"]');
-  metaTags.forEach((meta) => {
-    const name = meta.getAttribute('name');
-    const value = meta.getAttribute('content')?.trim();
-    console.warn(`[Guard] Blocked "${name}: ${value}" on event page ${path}`);
+  document.querySelectorAll('meta[name="header"], meta[name="footer"]').forEach((meta) => {
+    console.warn(`[Guard] Ignored "${meta.name}: ${meta.content}" on event page ${pathname}`);
     meta.remove();
   });
 }

@@ -1,6 +1,7 @@
 import { getConfig, getMetadata } from '../../scripts/ak.js';
 import { loadFragment } from '../fragment/fragment.js';
 import { setColorScheme } from '../section-metadata/section-metadata.js';
+import { getEventRoot } from '../../scripts/utils/event.js';
 
 const { locale } = getConfig();
 
@@ -301,11 +302,23 @@ export function decorateHeaderContent(header) {
   new ResizeObserver(() => syncDrawerState(header)).observe(header);
 }
 
-/**
+//**
  * loads and decorates the header
  * @param {Element} el The header element
  */
 export default async function init(el) {
+  // A "header" table on a page (e.g. an event's own "header" page) is content, not the site header
+  if (el.tagName !== 'HEADER') return;
+
+  // Event pages: logo + jump links + Register now, from the event's own "header" page
+  const eventRoot = getEventRoot();
+  if (eventRoot) {
+    const { default: decorateEventHeader } = await import('./event-header.js');
+    await decorateEventHeader(el, eventRoot);
+    decorateSkipLink(el);
+    return;
+  }
+
   const headerMeta = getMetadata('header');
   const path = headerMeta || HEADER_PATH;
   try {
